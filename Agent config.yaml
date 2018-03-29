@@ -87,7 +87,7 @@
         Accept the Team Explorer Everywhere license: "Y"
         Enter server URL: "{{vsts_server_url}}"
         Enter authentication type: "PAT"
-        Enter personal access token: "om6rhoxxzxdshfrznxdq4npwxatx4fsv2r22rcksoaudnzswd7ga"
+        Enter personal access token: "enter token value"
         Enter agent pool: "{{vsts_poolname}}"
         Enter agent name: "{{vsts_agent_name}}"
         Enter replace: "Y"
@@ -103,7 +103,7 @@
   #    removes: "{{vsts_agentfolder}}/.agent"
      # responses:
       #  Enter authentication type: "PAT"
-     #   Enter personal access token: om6rhoxxzxdshfrznxdq4npwxatx4fsv2r22rcksoaudnzswd7ga
+     #   Enter personal access token: enter token value
     #when: vsts_reconfigure_agent|bool
 
 

@@ -1,0 +1,128 @@
+---
+- hosts: Test2
+  become: true
+  become_user: root
+  become_method: sudo
+
+  vars:
+     vsts_agent_version: "2.131.0"
+     vsts_agent_baseurl: "https://vstsagentpackage.azureedge.net/agent/"
+     vsts_agent_file: "vsts-agent-linux-x64-{{vsts_agent_version}}.tar.gz"
+     vsts_agent_fullurl: "{{vsts_agent_baseurl}}{{vsts_agent_version}}/{{vsts_agent_file}}"
+     vsts_agent_user: "ubuntu"
+     vsts_accountname: "sctfs"
+     vsts_poolname: "Testing"
+     vsts_server_url: "https://sctfs.visualstudio.com"
+     vsts_agent_name: "Test2"
+     vsts_agentfolder: "/home/{{vsts_agent_user}}/myagent/"
+     vsts_workfolder: "/home/{{vsts_agent_user}}/mywork/"
+  tasks:
+
+  - name: Create directories
+    file: state=directory path="{{item}}" owner="{{vsts_agent_user}}" group="{{vsts_agent_user}}" mode=0755
+    with_items:
+      - "{{vsts_agentfolder}}"
+      - "{{vsts_workfolder}}"
+
+
+  - name: Download
+    get_url:
+      url: "{{vsts_agent_fullurl}}"
+      dest: "{{vsts_agentfolder}}/{{vsts_agent_file}}"
+      owner: "ubuntu"
+      group: "ubuntu"
+      mode: 0755
+
+  - name: Extract tar
+    unarchive:
+      src: "{{vsts_agentfolder}}/{{vsts_agent_file}}"
+      dest: "{{vsts_agentfolder}}"
+      copy: no
+      owner: "ubuntu"
+      group: "ubuntu"
+      remote_src: yes
+
+
+
+  - name: Configure more Dependencies for Ubuntu
+    command: "./installdependencies.sh"
+    args:
+      chdir: "{{vsts_agentfolder}}bin"
+    become: true
+  - name: update apt cache
+    apt: update_cache=yes state=latest
+
+  - name: Install npm
+    apt: name=npm update_cache=yes state=present
+
+  - name: Install nodejs
+    apt: name=nodejs update_cache=yes state=latest
+
+  - name: Install Nginx
+    apt: name=nginx  update_cache=yes state=latest
+  - name: Install python
+    apt: name=python  update_cache=yes state=latest
+  - name: Download get-pip.py
+    get_url: url=https://pypi.python.org/pypi/pip
+             dest=/tmp/get-pip.py
+
+
+   - name: install pip
+    apt: name=python-pip update_cache=yes  state=present
+
+  - name: install pexpect==4.4 -- required for the expect module
+    pip:
+      name: pexpect
+      version: 4.4
+  - name: install python-setuptools
+    apt: name=python-setuptools update_cache=yes
+
+  - name: Configure vsts-agent
+    expect:
+      chdir: "{{vsts_agentfolder}}"
+      command: "./config.sh"
+      echo: true
+      creates: "{{vsts_agentfolder}}/.agent"
+      responses:
+        Accept the Team Explorer Everywhere license: "Y"
+        Enter server URL: "{{vsts_server_url}}"
+        Enter authentication type: "PAT"
+        Enter personal access token: "om6rhoxxzxdshfrznxdq4npwxatx4fsv2r22rcksoaudnzswd7ga"
+        Enter agent pool: "{{vsts_poolname}}"
+        Enter agent name: "{{vsts_agent_name}}"
+        Enter replace: "Y"
+        Enter work folder: "{{vsts_workfolder}}"
+    become_user: "{{vsts_agent_user}}"
+    become: true
+
+ # - name: Unconfigure vsts-agent
+ #   expect:
+     # chdir: "{{vsts_agentfolder}}"
+    #  command: "./config.sh remove"
+   #   echo: true
+  #    removes: "{{vsts_agentfolder}}/.agent"
+     # responses:
+      #  Enter authentication type: "PAT"
+     #   Enter personal access token: om6rhoxxzxdshfrznxdq4npwxatx4fsv2r22rcksoaudnzswd7ga
+    #when: vsts_reconfigure_agent|bool
+
+
+
+  - name: Run VSTS Service
+    command: "./run.sh"
+    args:   
+     chdir: "{{vsts_agentfolder}}"
+    become_user: "{{vsts_agent_user}}" 
+
+  - name: Run svc Service
+    command: "./svc.sh install"
+    args:
+     chdir: "{{vsts_agentfolder}}"
+    become: true
+
+  - name: Run start Service
+    command: "./svc.sh start"
+    args:
+     chdir: "{{vsts_agentfolder}}"
+    become: true
+  

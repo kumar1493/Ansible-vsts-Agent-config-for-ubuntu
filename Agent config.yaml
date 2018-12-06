@@ -67,7 +67,7 @@
              dest=/tmp/get-pip.py
 
 
-   - name: install pip
+  - name: install pip
     apt: name=python-pip update_cache=yes  state=present
 
   - name: install pexpect==4.4 -- required for the expect module

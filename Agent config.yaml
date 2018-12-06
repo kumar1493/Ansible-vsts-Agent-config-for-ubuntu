@@ -1,5 +1,5 @@
 ---
-- hosts: 10.130.2.50
+- hosts: Test2
   become: true
   become_user: root
   become_method: sudo
